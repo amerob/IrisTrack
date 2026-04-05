@@ -1,4 +1,4 @@
-# eyetrack. — Eye Infection Recovery Dashboard
+# eyetrack: Eye Infection Recovery Dashboard
 
 > A browser-based AI medical dashboard for tracking eye infection recovery in real time using your webcam, Vision, and voice narration.
 
