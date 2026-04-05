@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eyetrack. — Eye Infection Recovery System</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+<div id="app">
+
+  <!-- ── Header (row 1) ── -->
+  <header class="panel">
+    <div class="header-left">
+      <div class="logo">eyetrack<span>.</span></div>
+      <div class="system-label">Eye Infection System</div>
+    </div>
+    <div class="header-center">
+      <div class="recovery-chip">
+        <span class="recovery-chip-label">RECOVERY SCORE</span>
+        <span class="recovery-chip-value" id="recovery-score">—</span>
+        <span style="font-size:11px;color:var(--text-muted)">%</span>
+      </div>
+      <div class="session-chip">
+        <span style="color:var(--text-muted);font-size:9px;letter-spacing:1px">SESSION</span>
+        <span id="session-timer">00:00:00</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <div id="session-status">● OFFLINE</div>
+      <button class="btn-icon" id="btn-snapshot" title="Take snapshot">📷</button>
+      <button class="btn-icon" id="btn-settings" title="Settings">⚙</button>
+    </div>
+  </header>
+
+  <!-- ── Main row (row 2): Camera | Metrics | AI ── -->
+  <div class="main-row">
+
+    <!-- ── Camera (bigger column) ── -->
+    <div id="camera-panel" class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Live Analysis</span>
+        <span id="fps-badge">— fps</span>
+      </div>
+      <div class="camera-wrap">
+        <video id="video" autoplay muted playsinline></video>
+        <canvas id="overlay"></canvas>
+        <div class="camera-status">
+          <div class="dot" id="cam-dot"></div>
+          <span id="cam-label">Camera off</span>
+        </div>
+        <div id="infection-badge" class="hidden">—</div>
+      </div>
+      <div class="camera-controls">
+        <button class="btn btn-primary" id="btn-start" style="flex:1">▶ Start Session</button>
+        <button class="btn btn-outline" id="btn-stop" style="flex:1" disabled>■ End</button>
+      </div>
+    </div>
+
+    <!-- ── Biometrics ── -->
+    <div id="metrics-panel" class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Biometric Dashboard</span>
+        <span class="panel-badge" id="metrics-live-badge">STANDBY</span>
+      </div>
+      <div class="metrics-body">
+
+        <!-- EAR rings -->
+        <div class="ear-row">
+          <div class="ear-card" id="ear-left-card">
+            <div class="ear-label">LEFT EAR</div>
+            <div class="ring-canvas-wrap">
+              <canvas id="ring-left" width="90" height="90"></canvas>
+              <div class="ring-overlay">
+                <div class="ring-number" id="ear-left-val">—</div>
+                <div class="ring-unit">EAR</div>
+              </div>
+            </div>
+            <div class="ear-sublabel">Eye Aspect Ratio</div>
+          </div>
+
+          <div class="asym-center">
+            <div class="asym-label">ASYMMETRY</div>
+            <div class="asym-value" id="asym-val">—</div>
+            <div style="font-size:9px;color:var(--text-muted);margin-top:-2px">%</div>
+            <div class="asym-bar-track">
+              <div class="asym-bar-fill" id="asym-bar"></div>
+            </div>
+          </div>
+
+          <div class="ear-card" id="ear-right-card">
+            <div class="ear-label">RIGHT EAR</div>
+            <div class="ring-canvas-wrap">
+              <canvas id="ring-right" width="90" height="90"></canvas>
+              <div class="ring-overlay">
+                <div class="ring-number" id="ear-right-val">—</div>
+                <div class="ring-unit">EAR</div>
+              </div>
+            </div>
+            <div class="ear-sublabel">Eye Aspect Ratio</div>
+          </div>
+        </div>
+
+        <!-- Recovery bar -->
+        <div class="recovery-section">
+          <div class="section-label">Infected Eye — Relative Openness</div>
+          <div class="recovery-row">
+            <div class="recovery-pct" id="rel-open-val">—</div>
+            <div class="recovery-unit">% of healthy baseline</div>
+            <div class="recovery-badge" id="recovery-badge">—</div>
+          </div>
+          <div class="recovery-bar-track">
+            <div class="recovery-bar-fill" id="openness-bar"></div>
+          </div>
+          <div class="recovery-thresholds" style="height:14px">
+            <span style="left:0%">0</span>
+            <span style="left:70%">70</span>
+            <span style="left:85%">85</span>
+            <span style="left:100%">100</span>
+          </div>
+        </div>
+
+        <!-- Mini stats -->
+        <div class="stats-mini">
+          <div class="mini-stat">
+            <div class="mini-label">PFH Left</div>
+            <div class="mini-value" id="pfh-left-val">—</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-label">PFH Right</div>
+            <div class="mini-value" id="pfh-right-val">—</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-label">Blinks L</div>
+            <div class="mini-value" id="blink-left-val">0</div>
+          </div>
+          <div class="mini-stat">
+            <div class="mini-label">Blinks R</div>
+            <div class="mini-value" id="blink-right-val">0</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ── AI Diagnosis + Iris conversation ── -->
+    <div id="ai-panel" class="panel">
+      <div class="panel-header">
+        <span class="panel-title">AI Diagnosis · Iris</span>
+        <span class="panel-badge" id="ai-badge">CLAUDE VISION</span>
+      </div>
+      <div class="ai-body">
+
+        <!-- Iris voice indicator -->
+        <div class="iris-bar" id="iris-bar">
+          <div class="iris-waves" id="iris-waves">
+            <div class="iris-wave"></div>
+            <div class="iris-wave"></div>
+            <div class="iris-wave"></div>
+            <div class="iris-wave"></div>
+            <div class="iris-wave"></div>
+          </div>
+          <span id="iris-status">Iris · ready</span>
+        </div>
+
+        <!-- AI analysis text -->
+        <div class="ai-content" id="ai-content">
+          <p class="ai-placeholder">Analysis will appear after the session starts.</p>
+        </div>
+
+        <!-- Action buttons -->
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-outline btn-sm" id="btn-analyze" disabled>🔍 Re-analyze</button>
+          <button class="btn btn-mic btn-sm" id="btn-mic" disabled title="Hold to speak to Iris">
+            🎙 Ask Iris
+          </button>
+        </div>
+
+        <!-- Mic transcript -->
+        <div id="mic-transcript" class="mic-transcript" style="display:none"></div>
+
+        <div class="ai-timestamp" id="ai-timestamp" style="display:none"></div>
+      </div>
+    </div>
+
+  </div><!-- /.main-row -->
+
+  <!-- ── Bottom grid (row 3): 4 equal panels ── -->
+  <div class="bottom-grid">
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">EAR Timeline</span>
+        <span class="panel-badge">60 s</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="chart-ear"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Asymmetry</span>
+        <span class="panel-badge">60 s</span>
+      </div>
+      <div class="chart-body">
+        <canvas id="chart-asym"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Left Lid Morphology</span>
+        <span class="lid-tag" id="left-lid-tag"></span>
+      </div>
+      <div class="lid-body">
+        <canvas id="lid-left" height="70" style="width:100%;display:block"></canvas>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Right Lid Morphology</span>
+        <span class="lid-tag" id="right-lid-tag"></span>
+      </div>
+      <div class="lid-body">
+        <canvas id="lid-right" height="70" style="width:100%;display:block"></canvas>
+      </div>
+    </div>
+
+  </div><!-- /.bottom-grid -->
+
+  <!-- ── Session History (row 4) ── -->
+  <div id="gallery-panel" class="panel">
+    <div class="gallery-header">
+      <span class="panel-title">Session History</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button class="btn btn-outline btn-sm" id="btn-export">↓ Export</button>
+        <button class="btn btn-danger btn-sm" id="btn-clear-history">Clear</button>
+      </div>
+    </div>
+    <div class="gallery-grid" id="gallery-grid">
+      <span class="gallery-empty" id="gallery-empty">No snapshots yet — press 📷 to capture one.</span>
+    </div>
+  </div>
+
+</div><!-- /#app -->
+
+
+<!-- ── Snapshot Modal ── -->
+<div id="snap-modal">
+  <div class="modal-box">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong id="modal-title" style="font-size:13px">Snapshot</strong>
+      <button class="btn-icon" id="modal-close">✕</button>
+    </div>
+    <img id="modal-img" class="modal-img" src="" alt="Snapshot" />
+    <div class="modal-metrics" id="modal-metrics"></div>
+    <div class="modal-notes" id="modal-notes"></div>
+    <button class="btn btn-danger btn-sm" id="modal-delete" style="align-self:flex-start">Delete</button>
+  </div>
+</div>
+
+
+<!-- ── Settings ── -->
+<div id="settings-panel">
+  <div class="settings-box">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div class="settings-title">Settings</div>
+      <button class="btn-icon" id="settings-close">✕</button>
+    </div>
+    <div class="settings-section">
+      <label>Anthropic API Key (Claude Vision + Iris conversation)</label>
+      <input type="password" id="claude-key" placeholder="sk-ant-…" autocomplete="off" />
+    </div>
+    <div class="settings-section">
+      <label>ElevenLabs API Key</label>
+      <input type="password" id="eleven-key" placeholder="…" autocomplete="off" />
+    </div>
+    <div class="settings-section">
+      <label>ElevenLabs Voice ID <span style="color:var(--text-muted);font-size:9px">(blank = Sarah)</span></label>
+      <input type="text" id="eleven-voice" placeholder="EXAVITQu4vr4xnSDxMaL" autocomplete="off" />
+    </div>
+    <div class="settings-section">
+      <label>Voice Engine</label>
+      <div class="toggle-row" id="voice-engine-toggle">
+        <button class="toggle-opt active" data-val="elevenlabs">ElevenLabs</button>
+        <button class="toggle-opt" data-val="system">System TTS</button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <label>Infected Eye</label>
+      <div class="toggle-row" id="infected-eye-toggle">
+        <button class="toggle-opt active" data-val="left">Left</button>
+        <button class="toggle-opt" data-val="right">Right</button>
+      </div>
+    </div>
+    <div class="settings-section">
+      <label>Snapshot Note</label>
+      <textarea id="snap-note" placeholder="Add a note for the next snapshot…"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-outline" id="settings-cancel">Cancel</button>
+      <button class="btn btn-primary" id="settings-save">Save</button>
+    </div>
+  </div>
+</div>
+
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
